@@ -69,7 +69,7 @@ return baseclass.extend({
 		}
 	},
 	values_redir: function(o, xmode) {
-		uci.sections('shadowsocks-rust', 'ss_redir', function(sdata) {
+		uci.sections('shadowsocks-rust', 'ss_local', function(sdata) {
 			var disabled = ucival_to_bool(sdata['disabled']),
 				sname = sdata['.name'],
 				mode = sdata['mode'] || 'tcp_only';

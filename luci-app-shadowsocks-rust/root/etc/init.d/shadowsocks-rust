@@ -13,7 +13,7 @@ START=99
 ss_confdir=/var/etc/shadowsocks-rust
 ss_bindir=/usr/bin
 
-ssrules_uc="/usr/share/ssrules/ssrules.uc"
+ssrules_uc="/usr/share/ssrules/ss-rules.uc"
 ssrules_nft="/etc/nftables.d/90-ssrules.nft"
 
 ss_mkjson_server_conf() {
@@ -103,7 +103,7 @@ ss_xxx() {
 ss_rules_cb() {
 	local cfgserver server
 
-	if [ "$cfgtype" = ss_redir ]; then
+	if [ "$cfgtype" = ss_local ]; then
 		config_get cfgserver "$cfg" server
 		config_get server "$cfgserver" server
 		ss_redir_servers="$ss_redir_servers $server"
@@ -291,8 +291,8 @@ validate_ss_redir_section() {
 validate_ss_rules_section() {
 	"${2:-ss_validate}" ss_rules "$1" \
 		'disabled:bool:0' \
-		'redir_tcp:uci("shadowsocks-rust", "@ss_redir")' \
-		'redir_udp:uci("shadowsocks-rust", "@ss_redir")' \
+		'redir_tcp:uci("shadowsocks-rust", "@ss_local")' \
+		'redir_udp:uci("shadowsocks-rust", "@ss_local")' \
 		'src_ips_bypass:or(ipaddr,cidr)' \
 		'src_ips_forward:or(ipaddr,cidr)' \
 		'src_ips_checkdst:or(ipaddr,cidr)' \
