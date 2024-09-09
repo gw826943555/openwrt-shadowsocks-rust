@@ -106,7 +106,7 @@ define Package/shadowsocks-rust-config/config
 
 		config SS_RUST_LOCAL_DNS
 			bool "Allow using dns protocol for sslocal"
-			default n
+			default y
 			help
 			  serves as a DNS server proxying queries to local or
 			  remote DNS servers by ACL rules.
