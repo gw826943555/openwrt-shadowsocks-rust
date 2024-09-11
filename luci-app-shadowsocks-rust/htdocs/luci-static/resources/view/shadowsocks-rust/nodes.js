@@ -15,7 +15,7 @@ return view.extend({
 			_('Definition of remote shadowsocks servers.  \
 				Disable any of them will also disable instances referring to it.'));
 
-		s = m.section(form.GridSection, 'server');
+		s = m.section(form.GridSection, 'ss_node');
 		s.addremove = true;
 		s.handleLinkImport = function() {
 			var textarea = new ui.Textarea();

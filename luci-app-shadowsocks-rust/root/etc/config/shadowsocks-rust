@@ -1,4 +1,7 @@
-config ss_nodes 'node'
+config general 'general'
+	option verbose '0'
+
+config ss_node 'node'
 	option disabled '0'
 	option server 'example.com'
 	option server_port '41200'

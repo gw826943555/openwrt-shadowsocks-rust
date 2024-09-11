@@ -21,14 +21,20 @@ return view.extend({
 	render: function(stats) {
 		var m, s, o;
 
-		m = new form.Map(conf,
+		m = new form.Map(conf, _('Client Settings'));
+
+		s = m.section(form.NamedSection, 'general', _('General settings'));
+		s.anonymous = true;
+
+		o = s.option(form.Flag, 'verbose', _('Verbose logging'));
+		o.default = false;
+
+		s = m.section(form.GridSection, 'ss_local', 
 			_('Local Instances'),
 			_('Instances of shadowsocks-rust components, e.g. ss-local, \
-			   ss-redir, ss-tunnel, ss-server, etc.  To enable an instance it \
-			   is required to enable both the instance itself and the remote \
-			   server it refers to.'));
-
-		s = m.section(form.GridSection, 'ss_local');
+			ss-redir, ss-tunnel, ss-server, etc.  To enable an instance it \
+			is required to enable both the instance itself and the remote \
+			server it refers to.'));
 		s.addremove = true;
 		s.sectiontitle = function(section_id) {
 			var s = uci.get(conf, section_id, 'protocol');

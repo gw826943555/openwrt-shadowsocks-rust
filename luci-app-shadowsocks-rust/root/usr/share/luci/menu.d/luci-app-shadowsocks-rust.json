@@ -20,11 +20,11 @@
 	},
 
 	"admin/services/shadowsocks-rust/servers": {
-		"title": "Remote Servers",
+		"title": "Nodes",
 		"order": 20,
 		"action": {
 			"type": "view",
-			"path": "shadowsocks-rust/servers"
+			"path": "shadowsocks-rust/nodes"
 		}
 	},
 

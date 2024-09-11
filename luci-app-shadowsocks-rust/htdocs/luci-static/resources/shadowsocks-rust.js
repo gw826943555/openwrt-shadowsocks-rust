@@ -158,28 +158,6 @@ return baseclass.extend({
 		o = optfunc(form.Value, 'password', _('Password'));
 		o.password = true;
 		o.size = 12;
-		o.handleGenKey = function() {
-			var section_id = this.section.section,
-			method = this.section.getOption('method').formvalue(section_id),
-			out = this.map.findElement('id', 'widget.cbid.shadowsocks-rust.%s.password'.format(section_id));
-
-			return fs.exec('/usr/bin/ssservice', [ 'genkey', '--encrypt-method', method ]).then(function(res) {
-				out.value = res.stdout || '';
-			}).catch(e => {
-				ui.addNotification(null, E('p', e.message), 'error');
-			});
-		};
-		o.renderWidget = function(/* ... */) {
-			var node = form.Value.prototype.renderWidget.apply(this, arguments);
-
-			(node.querySelector('.control-group') || node).appendChild(E('button', {
-				'class': 'cbi-button cbi-button-reset',
-				'title': _('Random PW'),
-				'click': ui.createHandlerFn(this, 'handleGenKey')
-			}, [ _('Random PW') ]));
-
-			return node;
-		};
 
 		o = optfunc(form.Value, 'key', _('Key (base64)'));
 		o.datatype = 'base64';
