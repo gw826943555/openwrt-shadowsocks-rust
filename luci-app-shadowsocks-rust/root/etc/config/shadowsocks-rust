@@ -1,29 +1,25 @@
-config ss_local
-	option disabled 1
-	option server 'sss0'
-	option local_address '0.0.0.0'
-	option local_port '1080'
-	option timeout '30'
+config ss_nodes 'node'
+	option disabled '0'
+	option server 'example.com'
+	option server_port '41200'
+	option password 'example'
+	option method 'chacha20-ietf-poly1305'
 
-config ss_rules 'ss_rules'
-	option disabled 1
-	option redir_tcp 'hi'
-	option redir_udp 'hi'
-	option src_default 'checkdst'
-	option dst_default 'bypass'
-	option local_default 'checkdst'
-	list src_ips_forward '192.168.1.4'
-	list dst_ips_forward '8.8.8.8'
+config ss_local 'redir'
+	option disabled '0'
+	option protocol 'redir'
+	option local_address '::'
+	option local_port '10086'
+	option mode 'tcp_and_udp'
+	option tcp_redir 'tproxy'
 
-config server 'sss0'
-	option disabled 1
-	option server '192.168.1.3'
-	option server_port '9001'
-	option password '********'
-	option method 'aes-256-cfb'
-
-config ss_server
-	option disabled 1
-	option server_port '9001'
-	option password '********'
-	option method 'aes-256-cfb'
+config ss_local 'dns'
+	option disabled '0'
+	option protocol 'dns'
+	option local_address '::'
+	option local_port '5353'
+	option mode 'udp_only'
+	option local_dns_address '8.8.8.8'
+	option local_dns_port '53'
+	option remote_dns_address '8.8.8.8'
+	option remote_dns_port '53'

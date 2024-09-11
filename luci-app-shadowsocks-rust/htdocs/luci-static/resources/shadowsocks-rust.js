@@ -18,9 +18,10 @@ var names_options_server = [
 ];
 
 var names_options_client = [
-	'server',
+	'protocol',
 	'local_address',
 	'local_port',
+	'mode',
 ];
 
 var names_options_common = [
@@ -218,22 +219,10 @@ return baseclass.extend({
 		return ucival_to_bool(val);
 	},
 	cfgvalue_overview: function(sdata) {
-		var stype = sdata['.type'],
-			lines = [];
+		var stype = sdata['.type'], lines = [];
 
-		if (stype === 'ss_server') {
-			this.cfgvalue_overview_(sdata, lines, names_options_server);
-			this.cfgvalue_overview_(sdata, lines, names_options_common);
-			this.cfgvalue_overview_(sdata, lines, ['local_ipv4_address', 'local_ipv6_address']);
-		} else if (stype === 'ss_local' || stype === 'ss_redir' || stype === 'ss_tunnel') {
-			this.cfgvalue_overview_(sdata, lines, names_options_client);
-			if (stype === 'ss_tunnel') {
-				this.cfgvalue_overview_(sdata, lines, ['tunnel_address']);
-			}
-			this.cfgvalue_overview_(sdata, lines, names_options_common);
-		} else {
-			return [];
-		}
+		this.cfgvalue_overview_(sdata, lines, names_options_client);
+		//this.cfgvalue_overview_(sdata, lines, names_options_common);
 
 		return lines;
 	},
