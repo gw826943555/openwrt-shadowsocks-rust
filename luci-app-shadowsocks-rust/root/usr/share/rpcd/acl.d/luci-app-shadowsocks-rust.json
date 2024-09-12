@@ -3,7 +3,8 @@
 		"description": "Grant service list access to LuCI app shadowsocks-rust",
 		"read": {
 			"file": {
-				"/usr/bin/sslocal": [ "exec" ]
+				"/usr/bin/sslocal": [ "exec" ],
+				"/sbin/logread": [ "exec" ]
 			},
 			"uci": [ "shadowsocks-rust" ]
 		},

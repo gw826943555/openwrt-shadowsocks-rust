@@ -35,5 +35,14 @@
 			"type": "view",
 			"path": "shadowsocks-rust/rules"
 		}
+	},
+
+	"admin/services/shadowsocks-rust/log": {
+		"title": "Logs",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "shadowsocks-rust/log"
+		}
 	}
 }
