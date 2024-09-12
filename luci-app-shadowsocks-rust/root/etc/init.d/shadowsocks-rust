@@ -74,10 +74,12 @@ start_service() {
 	mkdir -p "$ss_confdir"
 	config_load shadowsocks-rust
 
-	local verbose
-	config_get_bool verbose "general" "verbose" "0"
+	local verbose outbound_fwmark
+	config_get_bool verbose "global" "verbose" "0"
+	config_get outbound_fwmark "global" "outbound_fwmark" "255"
 
 	json_init
+	json_add_int 'outbound_fwmark' "$outbound_fwmark"
 	json_add_array 'locals'
 	config_foreach ss_start_local ss_local
 	json_close_array

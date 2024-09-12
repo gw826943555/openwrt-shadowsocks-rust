@@ -21,13 +21,20 @@ return view.extend({
 	render: function(stats) {
 		var m, s, o;
 
-		m = new form.Map(conf, _('Client Settings'));
+		m = new form.Map(conf, _('Client Settings'),
+			_('A fast tunnel proxy that helps you bypass firewalls. (<a href="https://shadowsocks.org" target="_blank">shadowsocks</a>)'));
 
-		s = m.section(form.NamedSection, 'general', _('General settings'));
-		s.anonymous = true;
+		s = m.section(form.NamedSection, 'global', 'global', _('Global settings'));
+		s.anonymous = false;
+
+		o = s.option(form.Value, 'outbound_fwmark', _('Firewall mark'),
+			_('Firewall fwmark for outbound packets.'));
+		o.addremove = false;
+		o.default = '255';
 
 		o = s.option(form.Flag, 'verbose', _('Verbose logging'));
 		o.default = false;
+		o.addremove = false;
 
 		s = m.section(form.GridSection, 'ss_local', 
 			_('Local Instances'),

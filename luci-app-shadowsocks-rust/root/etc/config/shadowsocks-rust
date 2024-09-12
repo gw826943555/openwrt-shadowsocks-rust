@@ -1,4 +1,4 @@
-config general 'general'
+config global 'global'
 	option verbose '0'
 
 config ss_node 'node'
