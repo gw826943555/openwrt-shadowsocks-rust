@@ -22,6 +22,12 @@ ss_start_node() {
 	config_get method "$1" 'method'
 	config_get password "$1" 'password'
 
+	# We use ip to avoid the case that DNS queries are also forwarded
+	server="$(echo $server | tr ' ' '\n' | xargs -n 1 resolveip | sort -u)"
+	if [ -z "$server" ]; then
+		logger -st sslocal[$$] -p4 "Resolve remote server ip failed, drop this server"
+		return 0
+	fi
 	json_add_object
 	json_add_string 'server' "$server"
 	json_add_int 'server_port' "$server_port"
