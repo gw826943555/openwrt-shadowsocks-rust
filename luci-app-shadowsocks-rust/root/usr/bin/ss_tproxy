@@ -1,0 +1,230 @@
+#!/bin/ash
+
+MARK=255
+PORT=10086
+SS_TPROXY_NFT=/var/etc/shadowsocks-rust/ss_tproxy
+
+ss_tproxy_flush() {
+	while ip -4 rule del fwmark 0x100 lookup 256 2>/dev/null; do true; done
+	ip -4 route flush table 0x100 2>/dev/null || true
+
+	while ip -6 rule del fwmark 0x100 lookup 256 2>/dev/null; do true; done
+	ip -6 route flush table 0x100 2>/dev/null || true
+}
+
+#stop_service
+ss_tproxy_stop() {
+    rm "$SS_TPROXY_NFT.nft" 2>/dev/null
+	ss_tproxy_flush
+	fw4 restart
+}
+
+#start_service
+ss_tproxy_start() {
+	echo "tproxy starting..."
+	local tmp="/var/etc/shadowsocks-rust/ss_tproxy"
+
+	ss_tproxy_flush
+
+	ip -4 rule add fwmark 0x100 lookup 256
+	ip -4 route add local default dev lo table 256
+	ip -6 rule add fwmark 0x100 lookup 256
+	ip -6 route add local default dev lo table 256
+
+	cat > "$SS_TPROXY_NFT.nft" << EOF
+set ss_tproxy_dst_bypass4_ {
+	type ipv4_addr
+	flags interval
+	auto-merge
+	elements = {
+		0.0.0.0/8,
+		10.0.0.0/8,
+		100.64.0.0/10,
+		127.0.0.0/8,
+		169.254.0.0/16,
+		172.16.0.0/12,
+		192.0.0.0/24,
+		192.0.2.0/24,
+		192.31.196.0/24,
+		192.52.193.0/24,
+		192.88.99.0/24,
+		192.168.0.0/16,
+		192.175.48.0/24,
+		198.18.0.0/15,
+		198.51.100.0/24,
+		203.0.113.0/24,
+		224.0.0.0/3,
+		240.0.0.0/4
+	}
+}
+
+set ss_tproxy_dst_bypass6_ {
+	type ipv6_addr
+	flags interval
+	auto-merge
+	elements = {
+		::/127,
+		::ffff:0.0.0.0/96,
+		64:ff9b::/96,
+		100::/64,
+		2001::/32,
+		2001:10::-2001:2f:ffff:ffff:ffff:ffff:ffff:ffff,
+		2001:db0::/28,
+		2002::/16,
+		fc00::/7,
+		fe80::/10,
+		ff00::/8
+	}
+}
+
+set ss_tproxy_server_bypass {
+	type ipv4_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_server_bypass6 {
+	type ipv6_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_src_bypass {
+	type ipv4_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_src_forward {
+	type ipv4_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_src_bypass6 {
+	type ipv6_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_src_forward6 {
+	type ipv6_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_dst_bypass {
+	type ipv4_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_dst_forward {
+	type ipv4_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_dst_bypass6 {
+	type ipv6_addr
+	flags interval
+	auto-merge
+}
+
+set ss_tproxy_dst_forward6 {
+	type ipv6_addr
+	flags interval
+	auto-merge
+}
+
+chain ss_tproxy_prerouting {
+	type filter hook prerouting priority mangle;
+	meta l4proto { tcp, udp } th dport { 0-1023 } goto ss_tproxy_pre
+}
+
+chain ss_tproxy_pre {
+	ip daddr @ss_tproxy_dst_bypass4_ accept
+	ip6 daddr @ss_tproxy_dst_bypass6_ accept
+	goto ss_tproxy_src
+}
+
+chain ss_tproxy_src {
+	ip saddr @ss_tproxy_src_bypass accept
+	ip saddr @ss_tproxy_src_forward goto ss_tproxy_forward
+	ip6 saddr @ss_tproxy_src_bypass6 accept
+	ip6 saddr @ss_tproxy_src_forward6 goto ss_tproxy_forward
+	goto ss_tproxy_dst
+}
+
+chain ss_tproxy_dst {
+	ip daddr @ss_tproxy_dst_bypass accept
+	ip daddr @ss_tproxy_dst_forward goto ss_tproxy_forward
+	ip6 daddr @ss_tproxy_dst_bypass6 accept
+	ip6 daddr @ss_tproxy_dst_forward6 goto ss_tproxy_forward
+	accept
+}
+
+chain ss_tproxy_forward {
+	meta l4proto tcp th dport { 0-1023 } meta mark set 0x100 counter tproxy to :${PORT};
+	meta l4proto udp th dport { 0-1023 } meta mark set 0x100 counter tproxy to :${PORT};
+}
+
+chain mangle_output {
+	meta mark ${MARK} return
+	meta l4proto { tcp, udp } th dport { 0-1023 } goto ss_tproxy_output
+}
+
+chain ss_tproxy_output {
+	ip daddr @ss_tproxy_dst_bypass4_ accept
+	ip6 daddr @ss_tproxy_dst_bypass6_ accept
+	ip daddr @ss_tproxy_dst_bypass accept
+	ip daddr @ss_tproxy_dst_forward goto ss_tproxy_output_mark
+	ip6 daddr @ss_tproxy_dst_bypass6 accept
+	ip6 daddr @ss_tproxy_dst_forward6 goto ss_tproxy_output_mark
+}
+
+chain ss_tproxy_output_mark {
+	meta l4proto { tcp, udp } th dport { 0-1023 } meta mark set 0x100 counter accept
+}
+EOF
+
+	echo "table inet chk {include \"$SS_TPROXY_NFT.nft\";}" >"$SS_TPROXY_NFT.nft.chk"
+	if nft -f "$SS_TPROXY_NFT.nft.chk" -c; then
+		fw4 restart
+	else
+		ss_tproxy_stop
+	fi
+
+	rm -f "$SS_TPROXY_NFT.nft.chk"
+}
+
+ss_tproxy_help() {
+    echo "This is help"
+}
+
+ss_tproxy_main() {
+	local proxy_file command
+
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            start)          command="$1";;
+            stop)           command="$1";;
+            help)           command="$1";;
+            -p)             shift; PORT="$1";;
+            -m)             shift; MARK="$1";;
+            *)              echo "Unknown command: $1"; help; return 1;;
+        esac
+        shift
+    done
+
+    case "$command" in
+        start)              ss_tproxy_start;;
+        stop)               ss_tproxy_stop;;
+        help)               ss_tproxy_help; return 1;;
+        *)                  echo "Unknown command: $command"; help; return 1;;
+    esac
+
+    return 0
+}
+
+ss_tproxy_main "$@"

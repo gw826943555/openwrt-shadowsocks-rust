@@ -76,6 +76,32 @@ ss_start_local() {
 	json_close_object
 }
 
+ss_tproxy_stop() {
+	local bin="/usr/bin/ss_tproxy"
+
+	[ -x "$bin" ] || return 1
+	"$bin" stop
+}
+
+ss_tproxy_start() {
+	local bin="/usr/bin/ss_tproxy"
+	local enabled local local_port outbound_fwmark
+	
+	[ -x "$bin" ] || return 1
+	"$bin" stop
+
+	config_get_bool enabled "tproxy" "enabled" "0"
+	[ ! "$enabled" = 0 ] || return 0
+
+	config_get local "tproxy" "local" "nil"
+	[ ! "$local" = "nil" ] || return 0
+
+	config_get local_port "$local" "$local_port" "10086"
+	config_get outbound_fwmark "global" "outbound_fwmark" "255"
+
+	"$bin" start -p "$local_port" -m "$outbound_fwmark"
+}
+
 start_service() {
 	mkdir -p "$ss_confdir"
 	config_load shadowsocks-rust
@@ -105,10 +131,13 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_close_instance
-	#ss_rules
+
+	ss_tproxy_start
 }
 
 stop_service() {
+	ss_tproxy_stop
+	
 	rm -rf "$ss_confdir"
 }
 

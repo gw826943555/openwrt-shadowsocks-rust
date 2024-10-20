@@ -4,6 +4,7 @@
 		"read": {
 			"file": {
 				"/usr/bin/sslocal": [ "exec" ],
+				"/usr/bin/ss_tproxy": [ "exec" ],
 				"/sbin/logread": [ "exec" ]
 			},
 			"uci": [ "shadowsocks-rust" ]
