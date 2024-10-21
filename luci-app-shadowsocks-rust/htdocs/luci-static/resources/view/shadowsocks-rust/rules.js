@@ -16,10 +16,9 @@ function src_dst_option(s /*, ... */) {
 return view.extend({
 	load: function() {
 		return Promise.all([
-			L.resolveDefault(fs.stat('/usr/share/ssrules'), null),
 			uci.load(conf).then(function() {
-				if (!uci.get_first(conf, 'ss_rules')) {
-					uci.set(conf, uci.add(conf, 'ss_rules', 'ss_rules'), 'disabled', '1');
+				if (!uci.get_first(conf, 'ss_tproxy')) {
+					uci.set(conf, uci.add(conf, 'ss_tproxy', 'ss_tproxy'), 'enabled', '0');
 				}
 			})
 		]);
@@ -37,22 +36,16 @@ return view.extend({
 				If the prior check results in action <em>checkdst</em>, packets will continue \
 				to have their dst addresses checked.'));
 
-		s = m.section(form.NamedSection, 'ss_rules', 'ss_rules');
+		s = m.section(form.NamedSection, 'ss_tproxy', 'ss_tproxy');
 		s.tab('general', _('General Settings'));
 		s.tab('src', _('Source Settings'));
 		s.tab('dst', _('Destination Settings'));
 
-		s.taboption('general', form.Flag, 'disabled', _('Disable'));
-		if (!stats[0]) {
-			ss.option_install_package(s, 'general');
-		}
+		s.taboption('general', form.Flag, 'enabled', _('Enabled'));
 
-		o = s.taboption('general', form.ListValue, 'redir_tcp',
-			_('ss-redir for TCP'));
-		ss.values_redir(o, 'tcp');
-		o = s.taboption('general', form.ListValue, 'redir_udp',
-			_('ss-redir for UDP'));
-		ss.values_redir(o, 'udp');
+		o = s.taboption('general', form.ListValue, 'tproxy_service',
+			_('Local service for tproxy'));
+		ss.values_tproxy(o);
 
 		o = s.taboption('general', form.ListValue, 'local_default',
 			_('Local-out default'),

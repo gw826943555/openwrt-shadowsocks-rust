@@ -138,7 +138,6 @@ set ss_tproxy_dst_forward6 {
 }
 
 chain ss_tproxy_prerouting {
-	type filter hook prerouting priority mangle;
 	meta l4proto { tcp, udp } th dport { 0-1023 } goto ss_tproxy_pre
 }
 
@@ -165,8 +164,8 @@ chain ss_tproxy_dst {
 }
 
 chain ss_tproxy_forward {
-	meta l4proto tcp th dport { 0-1023 } meta mark set 0x100 counter tproxy to :${PORT};
-	meta l4proto udp th dport { 0-1023 } meta mark set 0x100 counter tproxy to :${PORT};
+	meta l4proto tcp th dport { 0-1023 } meta mark set 0x100 tproxy to :${PORT} counter accept
+	meta l4proto udp th dport { 0-1023 } meta mark set 0x100 tproxy to :${PORT} counter accept
 }
 
 chain mangle_output {
@@ -186,6 +185,7 @@ chain ss_tproxy_output {
 chain ss_tproxy_output_mark {
 	meta l4proto { tcp, udp } th dport { 0-1023 } meta mark set 0x100 counter accept
 }
+
 EOF
 
 	echo "table inet chk {include \"$SS_TPROXY_NFT.nft\";}" >"$SS_TPROXY_NFT.nft.chk"

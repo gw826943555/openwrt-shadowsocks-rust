@@ -69,12 +69,12 @@ return baseclass.extend({
 			o.value('checkdst');
 		}
 	},
-	values_redir: function(o, xmode) {
+	values_tproxy: function(o) {
 		uci.sections('shadowsocks-rust', 'ss_local', function(sdata) {
 			var disabled = ucival_to_bool(sdata['disabled']),
 				sname = sdata['.name'],
-				mode = sdata['mode'] || 'tcp_only';
-			if (!disabled && mode.indexOf(xmode) !== -1) {
+				mode = sdata['mode'];
+			if (!disabled && sdata['protocol'] == 'redir') {
 				o.value(sname, sname + ' - ' + mode);
 			}
 		});

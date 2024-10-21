@@ -85,19 +85,19 @@ ss_tproxy_stop() {
 
 ss_tproxy_start() {
 	local bin="/usr/bin/ss_tproxy"
-	local enabled local local_port outbound_fwmark
-	
-	[ -x "$bin" ] || return 1
-	"$bin" stop
+	local enabled tproxy_service local_port outbound_fwmark
 
-	config_get_bool enabled "tproxy" "enabled" "0"
+	config_get_bool enabled "ss_tproxy" "enabled" "0"
 	[ ! "$enabled" = 0 ] || return 0
 
-	config_get local "tproxy" "local" "nil"
-	[ ! "$local" = "nil" ] || return 0
+	config_get tproxy_service "ss_tproxy" "tproxy_service" "nil"
+	[ ! "$tproxy_service" = "nil" ] || return 0
 
-	config_get local_port "$local" "$local_port" "10086"
+	config_get local_port "$tproxy_service" "local_port" "10086"
 	config_get outbound_fwmark "global" "outbound_fwmark" "255"
+
+	[ -x "$bin" ] || return 1
+	"$bin" stop
 
 	"$bin" start -p "$local_port" -m "$outbound_fwmark"
 }
