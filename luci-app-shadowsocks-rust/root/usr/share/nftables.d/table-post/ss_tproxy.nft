@@ -1,1 +1,0 @@
-include "/var/etc/shadowsocks-rust/*.nft"

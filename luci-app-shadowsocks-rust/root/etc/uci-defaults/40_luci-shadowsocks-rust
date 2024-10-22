@@ -2,4 +2,13 @@
 
 mkdir -p /etc/shadowsocks-rust
 /etc/init.d/rpcd reload
+
+uci -q batch <<-EOF >"/dev/null"
+	delete firewall.ss_tproxy
+	set firewall.ss_tproxy=include
+	set firewall.ss_tproxy.type=nftables
+	set firewall.ss_tproxy.path="/var/etc/shadowsocks-rust/ss_tproxy.nft"
+	set firewall.ss_tproxy.position="table-post"
+	commit firewall
+EOF
 exit 0

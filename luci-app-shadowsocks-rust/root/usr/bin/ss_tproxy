@@ -14,7 +14,7 @@ ss_tproxy_flush() {
 
 #stop_service
 ss_tproxy_stop() {
-    rm "$SS_TPROXY_NFT.nft" 2>/dev/null
+	echo "" > "$SS_TPROXY_NFT.nft" 2>/dev/null
 	ss_tproxy_flush
 	fw4 restart
 }
@@ -190,7 +190,7 @@ EOF
 
 	echo "table inet chk {include \"$SS_TPROXY_NFT.nft\";}" >"$SS_TPROXY_NFT.nft.chk"
 	if nft -f "$SS_TPROXY_NFT.nft.chk" -c; then
-		fw4 restart
+		fw4 reload
 	else
 		ss_tproxy_stop
 	fi
@@ -199,32 +199,32 @@ EOF
 }
 
 ss_tproxy_help() {
-    echo "This is help"
+	echo "This is help"
 }
 
 ss_tproxy_main() {
 	local proxy_file command
 
-    while [ "$#" -gt 0 ]; do
-        case "$1" in
-            start)          command="$1";;
-            stop)           command="$1";;
-            help)           command="$1";;
-            -p)             shift; PORT="$1";;
-            -m)             shift; MARK="$1";;
-            *)              echo "Unknown command: $1"; help; return 1;;
-        esac
-        shift
-    done
+	while [ "$#" -gt 0 ]; do
+		case "$1" in
+			start)          command="$1";;
+			stop)           command="$1";;
+			help)           command="$1";;
+			-p)             shift; PORT="$1";;
+			-m)             shift; MARK="$1";;
+			*)              echo "Unknown command: $1"; help; return 1;;
+		esac
+		shift
+	done
 
-    case "$command" in
-        start)              ss_tproxy_start;;
-        stop)               ss_tproxy_stop;;
-        help)               ss_tproxy_help; return 1;;
-        *)                  echo "Unknown command: $command"; help; return 1;;
-    esac
+	case "$command" in
+		start)              ss_tproxy_start;;
+		stop)               ss_tproxy_stop;;
+		help)               ss_tproxy_help; return 1;;
+		*)                  echo "Unknown command: $command"; help; return 1;;
+	esac
 
-    return 0
+	return 0
 }
 
 ss_tproxy_main "$@"
