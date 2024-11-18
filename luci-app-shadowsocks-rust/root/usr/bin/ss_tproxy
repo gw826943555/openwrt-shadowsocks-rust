@@ -160,8 +160,8 @@ chain ss_tproxy_dst {
 }
 
 chain ss_tproxy_forward {
-	meta l4proto tcp th dport { 0-1023 } meta mark set 0x100 tproxy to :${PORT} counter accept
-	meta l4proto udp th dport { 0-1023 } meta mark set 0x100 tproxy to :${PORT} counter accept
+	meta l4proto tcp meta mark set 0x100 tproxy to :${PORT} counter accept
+	meta l4proto udp meta mark set 0x100 tproxy to :${PORT} counter accept
 }
 
 chain ss_tproxy_output {
@@ -174,16 +174,16 @@ chain ss_tproxy_output {
 }
 
 chain ss_tproxy_output_mark {
-	meta l4proto { tcp, udp } th dport { 0-1023 } meta mark set 0x100 counter accept
+	meta l4proto { tcp, udp } meta mark set 0x100 counter accept
 }
 
 chain mangle_prerouting {
-	meta l4proto { tcp, udp } th dport { 0-1023 } goto ss_tproxy_pre
+	meta l4proto { tcp, udp } th dport { 0-1023 } jump ss_tproxy_pre
 }
 
 chain mangle_output {
 	meta mark ${MARK} return
-	meta l4proto { tcp, udp } th dport { 0-1023 } goto ss_tproxy_output
+	meta l4proto { tcp, udp } th dport { 0-1023 } jump ss_tproxy_output
 }
 
 EOF
