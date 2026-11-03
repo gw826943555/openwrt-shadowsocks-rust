@@ -291,8 +291,8 @@ msgstr "确定"
 msgid "Import nodes"
 msgstr "导入节点"
 
-msgid "Paste one ss:// URI per line. SIP002 and the legacy form are supported, imported nodes are enabled immediately."
-msgstr "每行粘贴一个 ss:// 链接。支持 SIP002 和旧版 base64 格式，导入的节点会立即启用。"
+msgid "Paste one ss:// URI per line. SIP002 and the legacy form are supported, imported nodes are saved immediately."
+msgstr "每行粘贴一个 ss:// 链接。支持 SIP002 和旧版 base64 格式，导入的节点会立即保存。"
 
 msgid "Cancel"
 msgstr "取消"

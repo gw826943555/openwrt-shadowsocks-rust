@@ -313,8 +313,6 @@ return view.extend({
         }
 
         return uci.save().then(function() {
-            return uci.apply();
-        }).then(function() {
             this.showImportResult(summary, errors, true);
         }.bind(this)).catch(function(err) {
             this.showImportResult(_('Failed to save the imported nodes: %s').format(err), errors, false);
@@ -352,7 +350,7 @@ return view.extend({
 
         ui.showModal(_('Import nodes'), [
             E('p', { 'class': 'cbi-section-descr' },
-                _('Paste one ss:// URI per line. SIP002 and the legacy form are supported, imported nodes are enabled immediately.')),
+                _('Paste one ss:// URI per line. SIP002 and the legacy form are supported, imported nodes are saved immediately.')),
             E('div', { 'class': 'cbi-value' }, [
                 E('div', { 'class': 'cbi-value-field' }, input)
             ]),

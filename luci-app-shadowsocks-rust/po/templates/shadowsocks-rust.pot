@@ -291,7 +291,7 @@ msgstr ""
 msgid "Import nodes"
 msgstr ""
 
-msgid "Paste one ss:// URI per line. SIP002 and the legacy form are supported, imported nodes are enabled immediately."
+msgid "Paste one ss:// URI per line. SIP002 and the legacy form are supported, imported nodes are saved immediately."
 msgstr ""
 
 msgid "Cancel"
