@@ -283,7 +283,6 @@ generate_config_json() {
   json_add_int "nofile" "${nofile}"
   json_add_boolean "ipv6_first" false
   json_add_boolean "ipv6_only" false
-  json_add_int "outbound_fwmark" 255
   if [ "${no_delay}" = "0" ]; then
     json_add_boolean "no_delay" false
   else

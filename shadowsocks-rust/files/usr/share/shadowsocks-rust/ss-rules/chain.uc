@@ -60,7 +60,6 @@ chain ss_rules_forward {
 chain ss_rules_local {
 	type route hook output priority mangle; policy accept;
 	ct direction reply accept;
-	meta mark 255 accept;
 	ip daddr @ss_rules_dst_bypass accept;
 	ip6 daddr @ss_rules6_dst_bypass accept;
 	meta l4proto { tcp, udp } goto {{ policy.local == "forward" ? "ss_rules_local_forward" : "ss_rules_local_dst" }};
