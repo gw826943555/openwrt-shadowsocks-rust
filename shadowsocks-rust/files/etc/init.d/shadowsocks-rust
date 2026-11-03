@@ -20,7 +20,6 @@ NAME=shadowsocks-rust
 RULES_DIR=/usr/share/$NAME/ss-rules
 DOMAINS_RULES="$RULES_DIR/dnsmasq.uc"
 NFT_RULES=/var/$NAME/shadowsocks-rust.nft
-DNS_PORT=5300
 ENABLED="$(uci -q get shadowsocks-rust.main.enabled)"
 
 uci_load "$NAME"
@@ -41,10 +40,6 @@ parse_config_main() {
   config_get socks_port "$section_name" socks_port
   config_get http_port "$section_name" http_port
 
-  if [ "$dns_port" != "$DNS_PORT" ]; then
-    DNS_PORT=$dns_port
-  fi
-
   # Expose values for jshn-based JSON generation in generate_config_json.
   MAIN_REDIR_PORT="$redir_port"
   MAIN_DNS_PORT="$dns_port"
@@ -64,11 +59,6 @@ parse_config_global() {
   config_get fast_open "$section_name" fast_open
   config_get mptcp "$section_name" mptcp
   config_get log_level "$section_name" log_level
-}
-
-# parse_config_extra is kept for compatibility but holds no options itself.
-parse_config_extra() {
-  :
 }
 
 SERVER_LIST_STR=""
@@ -370,7 +360,7 @@ start_shadowsocks_rust() {
   procd_set_param command /usr/bin/sslocal -c /var/shadowsocks-rust/config.json
   procd_set_param pidfile /var/run/shadowsocks-rust.pid
   procd_set_param file /var/shadowsocks-rust/config.json
-  procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-2}
+  procd_set_param respawn 3600 5 2
   procd_set_param limits core="unlimited"
   procd_set_param stdout 1
   procd_set_param stderr 1
