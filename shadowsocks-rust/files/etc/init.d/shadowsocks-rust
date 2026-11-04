@@ -6,8 +6,8 @@
 # See /LICENSE for more information.
 #
 
-START=90
-STOP=15
+START=99
+STOP=10
 
 USE_PROCD=1
 
