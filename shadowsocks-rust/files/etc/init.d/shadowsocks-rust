@@ -76,22 +76,15 @@ is_ip_address() {
 }
 
 # Print the first address of a hostname, IPv4 before IPv6. Returns 1 when the
-# name cannot be resolved.
+# name cannot be resolved. Uses resolveip so the output is a bare address list.
 resolve_host() {
-  local out
   local v4
   local v6
 
-  out=$(nslookup "$1" 2>/dev/null | awk '
-    /^Name:/ { answer = 1; next }
-    answer && /^Address:/ { print $2 }
-  ')
-  [ -n "$out" ] || return 1
-
-  v4=$(printf '%s\n' "$out" | grep -v ':' | head -n 1)
+  v4=$(resolveip -4 "$1" 2>/dev/null | head -n 1)
   [ -n "$v4" ] && { printf '%s\n' "$v4"; return 0; }
 
-  v6=$(printf '%s\n' "$out" | grep ':' | head -n 1)
+  v6=$(resolveip -6 "$1" 2>/dev/null | head -n 1)
   [ -n "$v6" ] && { printf '%s\n' "$v6"; return 0; }
 
   return 1
