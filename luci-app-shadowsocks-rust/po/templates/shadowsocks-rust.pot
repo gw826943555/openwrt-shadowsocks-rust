@@ -105,10 +105,16 @@ msgstr ""
 msgid "Advanced Settings"
 msgstr ""
 
-msgid "Worker Count"
+msgid "Runtime Mode"
 msgstr ""
 
-msgid "Worker threads, set it to the CPU core count."
+msgid "Multi-thread uses one Tokio worker per CPU core. Single-thread uses less memory on small routers."
+msgstr ""
+
+msgid "Multi-thread"
+msgstr ""
+
+msgid "Single-thread"
 msgstr ""
 
 msgid "DNS Client Cache Size"

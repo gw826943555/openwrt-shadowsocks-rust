@@ -100,9 +100,11 @@ return view.extend({
         s = m.section(form.NamedSection, 'global', 'settings', _('Advanced Settings'));
         s.anonymous = true;
 
-        o = s.option(form.Value, 'worker_count', _('Worker Count'),
-            _('Worker threads, set it to the CPU core count.'));
-        o.datatype = 'range(1,1024)';
+        o = s.option(form.ListValue, 'runtime_mode', _('Runtime Mode'),
+            _('Multi-thread uses one Tokio worker per CPU core. Single-thread uses less memory on small routers.'));
+        o.value('multi_thread', _('Multi-thread'));
+        o.value('single_thread', _('Single-thread'));
+        o.default = 'multi_thread';
         o.rmempty = false;
 
         o = s.option(form.Value, 'client_cache_size', _('DNS Client Cache Size'),

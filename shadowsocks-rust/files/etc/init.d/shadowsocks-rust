@@ -35,7 +35,7 @@ _error() {
 # Global proxy behavior settings are stored in UCI section 'settings global'.
 parse_config_global() {
   section_name="$1"
-  config_get worker_count "$section_name" worker_count
+  config_get runtime_mode "$section_name" runtime_mode
   config_get client_cache_size "$section_name" client_cache_size
   config_get no_delay "$section_name" no_delay
   config_get keep_alive "$section_name" keep_alive
@@ -258,11 +258,19 @@ generate_config_json() {
   : "${keep_alive:=30}"
   : "${nofile:=32768}"
   : "${client_cache_size:=64}"
-  : "${worker_count:=1}"
+  : "${runtime_mode:=multi_thread}"
   : "${no_delay:=1}"
   : "${fast_open:=1}"
   : "${mptcp:=1}"
   : "${log_level:=info}"
+
+  case "${runtime_mode}" in
+    single_thread|multi_thread) ;;
+    *)
+      _error "invalid runtime_mode '${runtime_mode}', using multi_thread"
+      runtime_mode="multi_thread"
+      ;;
+  esac
 
   json_init
 
@@ -324,10 +332,9 @@ generate_config_json() {
     json_add_int "level" "${sslocal_log_level}"
   json_close_object
 
-  # runtime
+  # runtime: omit worker_count so multi_thread uses the CPU count.
   json_add_object "runtime"
-    json_add_string "mode" "multi_thread"
-    json_add_int "worker_count" "${worker_count}"
+    json_add_string "mode" "${runtime_mode}"
   json_close_object
 
   # 运行时生成的 config.json 放到 /var（tmpfs），避免频繁写 flash。

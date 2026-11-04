@@ -105,11 +105,17 @@ msgstr "请先在基本设置中添加并启用一个 redir 监听"
 msgid "Advanced Settings"
 msgstr "高级设置"
 
-msgid "Worker Count"
-msgstr "工作线程数"
+msgid "Runtime Mode"
+msgstr "运行模式"
 
-msgid "Worker threads, set it to the CPU core count."
-msgstr "工作线程数，建议设为 CPU 核心数。"
+msgid "Multi-thread uses one Tokio worker per CPU core. Single-thread uses less memory on small routers."
+msgstr "多线程按 CPU 核数创建 Tokio worker；单线程更省内存，适合小路由器。"
+
+msgid "Multi-thread"
+msgstr "多线程"
+
+msgid "Single-thread"
+msgstr "单线程"
 
 msgid "DNS Client Cache Size"
 msgstr "DNS 客户端缓存数"
