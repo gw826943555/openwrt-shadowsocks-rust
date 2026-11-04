@@ -145,15 +145,18 @@ parse_config_node() {
     # Pin a domain to one of its addresses. sslocal then does not depend on
     # the resolver at runtime, and rules.uc puts the address into the
     # dst_bypass set because config.json holds an IP instead of a name.
+    # Keeping an unresolved hostname would omit the server from dst_bypass
+    # and can TProxy-loop traffic to the real server IP, so refuse the node.
     if ! is_ip_address "${server}"; then
       resolved=$(resolve_host "${server}")
 
-      if [ -n "${resolved}" ]; then
-        _info "server ${server} resolved to ${resolved}"
-        server="${resolved}"
-      else
-        _error "failed to resolve server ${server}, keeping the hostname"
+      if [ -z "${resolved}" ]; then
+        _error "failed to resolve server ${server}, node ${section_name} skipped"
+        return
       fi
+
+      _info "server ${server} resolved to ${resolved}"
+      server="${resolved}"
     fi
 
     # Append this server to the JSON servers array via jshn.  The array must
