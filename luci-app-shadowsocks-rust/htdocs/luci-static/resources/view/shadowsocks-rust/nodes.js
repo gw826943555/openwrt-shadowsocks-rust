@@ -377,6 +377,29 @@ return view.extend({
         m = new form.Map('shadowsocks-rust', _('Shadowsocks-Rust'),
             _('Transparent proxy and DNS settings'));
 
+        // Balancer is global but shown here: it only matters with multiple nodes.
+        s = m.section(form.NamedSection, 'global', 'settings', _('Balancer'),
+            _('How sslocal picks among enabled nodes by latency. Ineffective with a single node.'));
+        s.anonymous = true;
+
+        o = s.option(form.Value, 'max_server_rtt', _('Max Server RTT'),
+            _('Probe timeout in seconds; slower replies are treated as unavailable.'));
+        o.datatype = 'range(1,300)';
+        o.placeholder = '15';
+        o.rmempty = false;
+
+        o = s.option(form.Value, 'check_interval', _('Check Interval'),
+            _('Seconds between probes of each server.'));
+        o.datatype = 'range(1,86400)';
+        o.placeholder = '1800';
+        o.rmempty = false;
+
+        o = s.option(form.Value, 'check_best_interval', _('Best Server Check Interval'),
+            _('Seconds between probes of the current best server only.'));
+        o.datatype = 'range(1,86400)';
+        o.placeholder = '900';
+        o.rmempty = false;
+
         s = m.section(form.GridSection, 'node', _('Nodes'));
         s.anonymous = true;
         s.addremove = true;

@@ -24,6 +24,30 @@ msgstr "本地服务"
 msgid "Nodes"
 msgstr "节点"
 
+msgid "Balancer"
+msgstr "负载均衡"
+
+msgid "How sslocal picks among enabled nodes by latency. Ineffective with a single node."
+msgstr "多节点时 sslocal 按延迟选路；只有一个节点时几乎无影响。"
+
+msgid "Max Server RTT"
+msgstr "最大服务器 RTT"
+
+msgid "Probe timeout in seconds; slower replies are treated as unavailable."
+msgstr "探测超时（秒）；超过则视为不可用。"
+
+msgid "Check Interval"
+msgstr "探测间隔"
+
+msgid "Seconds between probes of each server."
+msgstr "对各服务器探测的间隔（秒）。"
+
+msgid "Best Server Check Interval"
+msgstr "最优节点探测间隔"
+
+msgid "Seconds between probes of the current best server only."
+msgstr "仅对当前最优节点的探测间隔（秒）。"
+
 msgid "Rules"
 msgstr "规则"
 

@@ -43,6 +43,9 @@ parse_config_global() {
   config_get fast_open "$section_name" fast_open
   config_get mptcp "$section_name" mptcp
   config_get log_level "$section_name" log_level
+  config_get max_server_rtt "$section_name" max_server_rtt
+  config_get check_interval "$section_name" check_interval
+  config_get check_best_interval "$section_name" check_best_interval
 }
 
 SERVER_LIST_STR=""
@@ -263,6 +266,9 @@ generate_config_json() {
   : "${fast_open:=1}"
   : "${mptcp:=1}"
   : "${log_level:=info}"
+  : "${max_server_rtt:=15}"
+  : "${check_interval:=1800}"
+  : "${check_best_interval:=900}"
 
   case "${runtime_mode}" in
     single_thread|multi_thread) ;;
@@ -271,6 +277,19 @@ generate_config_json() {
       runtime_mode="multi_thread"
       ;;
   esac
+
+  if ! echo "${max_server_rtt}" | grep -qE '^[1-9][0-9]*$'; then
+    _error "invalid max_server_rtt '${max_server_rtt}', using 15"
+    max_server_rtt=15
+  fi
+  if ! echo "${check_interval}" | grep -qE '^[1-9][0-9]*$'; then
+    _error "invalid check_interval '${check_interval}', using 1800"
+    check_interval=1800
+  fi
+  if ! echo "${check_best_interval}" | grep -qE '^[1-9][0-9]*$'; then
+    _error "invalid check_best_interval '${check_best_interval}', using 900"
+    check_best_interval=900
+  fi
 
   json_init
 
@@ -308,11 +327,11 @@ generate_config_json() {
   json_add_int "udp_timeout" 300
   json_add_int "udp_max_associations" 1024
 
-  # balancer
+  # balancer: probe servers by RTT when multiple nodes are enabled
   json_add_object "balancer"
-    json_add_int "max_server_rtt" 15
-    json_add_int "check_interval" 360
-    json_add_int "check_best_interval" 120
+    json_add_int "max_server_rtt" "${max_server_rtt}"
+    json_add_int "check_interval" "${check_interval}"
+    json_add_int "check_best_interval" "${check_best_interval}"
   json_close_object
 
   # security

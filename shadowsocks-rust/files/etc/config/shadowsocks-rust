@@ -14,6 +14,10 @@ config settings global
     option mptcp '0'
     # sslocal log level: info, debug or trace
     option log_level 'info'
+    # Multi-server balancer (sslocal picks the better node by RTT)
+    option max_server_rtt '15'
+    option check_interval '1800'
+    option check_best_interval '900'
 
 config local 'redir'
     option enabled '1'

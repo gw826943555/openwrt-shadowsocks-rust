@@ -24,6 +24,30 @@ msgstr ""
 msgid "Nodes"
 msgstr ""
 
+msgid "Balancer"
+msgstr ""
+
+msgid "How sslocal picks among enabled nodes by latency. Ineffective with a single node."
+msgstr ""
+
+msgid "Max Server RTT"
+msgstr ""
+
+msgid "Probe timeout in seconds; slower replies are treated as unavailable."
+msgstr ""
+
+msgid "Check Interval"
+msgstr ""
+
+msgid "Seconds between probes of each server."
+msgstr ""
+
+msgid "Best Server Check Interval"
+msgstr ""
+
+msgid "Seconds between probes of the current best server only."
+msgstr ""
+
 msgid "Rules"
 msgstr ""
 
