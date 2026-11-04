@@ -1,9 +1,7 @@
 'use strict';
 'require view';
 'require form';
-'require fs';
 'require rpc';
-'require uci';
 
 return view.extend({
     callStatus: rpc.declare({
@@ -44,29 +42,58 @@ return view.extend({
             _('Allow the service to start. When off, sslocal and the rules are not started.'));
         o.rmempty = false;
 
-        o = s.option(form.Value, 'socks_port', _('SOCKS Port'),
-            _('SOCKS5 proxy port, 0 to disable.'));
+        // Local listeners (socks / http / redir / dns)
+        s = m.section(form.GridSection, 'local', _('Local Service'),
+            _('Local listeners for sslocal (SOCKS, HTTP, redir, DNS).'));
+        s.anonymous = true;
+        s.addremove = true;
+        s.nodescriptions = true;
+
+        o = s.option(form.Flag, 'enabled', _('Enabled'));
+        o.editable = true;
+        o.default = o.enabled;
+
+        o = s.option(form.Value, 'name', _('Name'),
+            _('Optional label shown in the Rules dropdowns.'));
+        o.rmempty = true;
+
+        o = s.option(form.ListValue, 'protocol', _('Protocol'));
+        o.value('socks', _('SOCKS5'));
+        o.value('http', _('HTTP'));
+        o.value('redir', _('Redir (TProxy)'));
+        o.value('dns', _('DNS'));
+        o.rmempty = false;
+
+        o = s.option(form.Value, 'local_address', _('Listen Address'));
+        o.datatype = 'ipaddr';
+        o.placeholder = '::';
+        o.default = '::';
+        o.rmempty = true;
+        o.modalonly = true;
+
+        o = s.option(form.Value, 'local_port', _('Port'));
         o.datatype = 'port';
         o.rmempty = false;
 
-        o = s.option(form.Value, 'http_port', _('HTTP Port'),
-            _('HTTP proxy port, 0 to disable.'));
-        o.datatype = 'port';
-        o.rmempty = false;
+        o = s.option(form.ListValue, 'tcp_redir', _('TCP Redir Mode'));
+        o.value('tproxy', 'tproxy');
+        o.value('redirect', 'redirect');
+        o.default = 'tproxy';
+        o.depends('protocol', 'redir');
+        o.modalonly = true;
 
-        o = s.option(form.Value, 'redir_port', _('TProxy Port'),
-            _('Listening port used by the nftables rules.'));
-        o.datatype = 'port';
-        o.rmempty = false;
-
-        o = s.option(form.Value, 'dns_port', _('DNS Port'),
-            _('Local DNS relay port, dnsmasq forwards proxied domains here.'));
-        o.datatype = 'port';
-        o.rmempty = false;
+        o = s.option(form.ListValue, 'udp_redir', _('UDP Redir Mode'));
+        o.value('tproxy', 'tproxy');
+        o.default = 'tproxy';
+        o.depends('protocol', 'redir');
+        o.modalonly = true;
 
         o = s.option(form.Value, 'dns_remote_addr', _('DNS Remote Server'),
-            _('Upstream DNS for proxied domains, queried through the tunnel.'));
+            _('Upstream DNS for this relay, queried through the tunnel.'));
         o.datatype = 'ipaddr';
+        o.placeholder = '1.1.1.1';
+        o.depends('protocol', 'dns');
+        o.modalonly = true;
         o.rmempty = false;
 
         // Advanced Settings

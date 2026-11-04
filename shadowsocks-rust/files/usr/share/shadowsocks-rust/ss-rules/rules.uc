@@ -105,7 +105,37 @@ let policy = {
 	lan_dev: lan_device(),
 };
 
-let redir_port = get_opt("main", "redir_port", "60080");
+/* Port of the redir local selected by settings.tproxy_local. */
+function tproxy_redir_port() {
+	let sid = get_opt("settings", "tproxy_local", "");
+
+	if (!sid) {
+		warn("tproxy_local is not set, cannot render tproxy rules\n");
+		return null;
+	}
+
+	let enabled = cur.get("shadowsocks-rust", sid, "enabled");
+	let protocol = cur.get("shadowsocks-rust", sid, "protocol");
+	let port = cur.get("shadowsocks-rust", sid, "local_port");
+
+	if (enabled != "1" || protocol != "redir") {
+		warn(sprintf("tproxy_local \"%s\" is not an enabled redir local\n", sid));
+		return null;
+	}
+
+	if (port == null || port == "" || !match(port, /^[0-9]+$/) ||
+	    int(port) < 1 || int(port) > 65535) {
+		warn(sprintf("tproxy_local \"%s\" has an invalid port\n", sid));
+		return null;
+	}
+
+	return port;
+}
+
+let redir_port = tproxy_redir_port();
+
+if (redir_port == null)
+	exit(1);
 %}
 table inet shadowsocks-rust-mangle {
 {% include(dir + "/set.uc", { sets: sets }); %}

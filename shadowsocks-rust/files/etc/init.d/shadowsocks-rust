@@ -32,22 +32,6 @@ _error() {
   logger -p 3 -t $NAME "$1"
 }
 
-parse_config_main() {
-  section_name="$1"
-  config_get redir_port "$section_name" redir_port
-  config_get dns_port "$section_name" dns_port
-  config_get dns_remote_addr "$section_name" dns_remote_addr
-  config_get socks_port "$section_name" socks_port
-  config_get http_port "$section_name" http_port
-
-  # Expose values for jshn-based JSON generation in generate_config_json.
-  MAIN_REDIR_PORT="$redir_port"
-  MAIN_DNS_PORT="$dns_port"
-  MAIN_DNS_REMOTE_ADDR="$dns_remote_addr"
-  MAIN_SOCKS_PORT="$socks_port"
-  MAIN_HTTP_PORT="$http_port"
-}
-
 # Global proxy behavior settings are stored in UCI section 'settings global'.
 parse_config_global() {
   section_name="$1"
@@ -62,6 +46,90 @@ parse_config_global() {
 }
 
 SERVER_LIST_STR=""
+LOCAL_LIST_STR=""
+LOCAL_PORT_KEYS=""
+
+# Append one enabled local listener to the jshn locals array. Skips disabled
+# or invalid entries; refuses duplicate address:port pairs.
+parse_config_local() {
+  section_name="$1"
+  local enabled
+  local protocol
+  local local_address
+  local local_port
+  local tcp_redir
+  local udp_redir
+  local dns_remote_addr
+  local key
+
+  config_get enabled "$section_name" enabled
+  [ "${enabled}" = "1" ] || return 0
+
+  config_get protocol "$section_name" protocol
+  config_get local_address "$section_name" local_address "::"
+  config_get local_port "$section_name" local_port
+
+  case "${protocol}" in
+    ''|socks|http|redir|dns) ;;
+    *)
+      _error "local ${section_name}: unsupported protocol '${protocol}', skipped"
+      return 0
+      ;;
+  esac
+
+  if ! echo "${local_port}" | grep -qE '^[0-9]+$' ||
+    [ "${local_port}" -lt 1 ] || [ "${local_port}" -gt 65535 ]; then
+    _error "local ${section_name}: invalid port '${local_port}', skipped"
+    return 0
+  fi
+
+  [ -n "${local_address}" ] || local_address="::"
+
+  key="${local_address}:${local_port}"
+  case " ${LOCAL_PORT_KEYS} " in
+    *" ${key} "*)
+      _error "local ${section_name}: duplicate listen ${key}, skipped"
+      return 0
+      ;;
+  esac
+  LOCAL_PORT_KEYS="${LOCAL_PORT_KEYS} ${key}"
+
+  json_add_object ""
+  json_add_string "local_address" "${local_address}"
+  json_add_int "local_port" "${local_port}"
+  json_add_boolean "disabled" false
+
+  case "${protocol}" in
+    http)
+      json_add_string "protocol" "http"
+      ;;
+    redir)
+      config_get tcp_redir "$section_name" tcp_redir "tproxy"
+      config_get udp_redir "$section_name" udp_redir "tproxy"
+      json_add_string "protocol" "redir"
+      json_add_string "tcp_redir" "${tcp_redir}"
+      json_add_string "udp_redir" "${udp_redir}"
+      json_add_string "mode" "tcp_and_udp"
+      ;;
+    dns)
+      config_get dns_remote_addr "$section_name" dns_remote_addr "8.8.8.8"
+      json_add_string "protocol" "dns"
+      json_add_string "local_dns_address" "${dns_remote_addr}"
+      json_add_int "local_dns_port" 53
+      json_add_string "remote_dns_address" "${dns_remote_addr}"
+      json_add_int "remote_dns_port" 53
+      json_add_int "client_cache_size" "${client_cache_size:-64}"
+      # Need the TCP fallback: obfs-local (simple-obfs) is a TCP only plugin,
+      # UDP relayed to the server as plain Shadowsocks datagrams often gets
+      # dropped, which leaves every proxied DNS lookup unanswered.
+      json_add_string "mode" "tcp_and_udp"
+      ;;
+    # socks (default): no protocol field
+  esac
+
+  json_close_object
+  LOCAL_LIST_STR="1"
+}
 
 # Succeeds when $1 is a literal IPv4 or IPv6 address.
 is_ip_address() {
@@ -176,24 +244,20 @@ generate_config_json() {
   # start_service may run more than once in the same process (reload_service
   # calls stop and then start), so rebuild the list from scratch.
   SERVER_LIST_STR=""
+  LOCAL_LIST_STR=""
+  LOCAL_PORT_KEYS=""
 
   # Build the config object with OpenWrt's built-in jshn library instead of
   # sed-replacing a static template.  jshn takes care of JSON string escaping
   # automatically (passwords, addresses, plugin opts, ...), so no template
   # file and no awk/sed splicing are needed anymore.
 
-  parse_config_main main
   parse_config_global global
 
   # Sensible defaults when a UCI option is left unset.
-  : "${MAIN_REDIR_PORT:=60080}"
-  : "${MAIN_DNS_PORT:=5300}"
-  : "${MAIN_SOCKS_PORT:=1080}"
-  : "${MAIN_HTTP_PORT:=1081}"
-  : "${MAIN_DNS_REMOTE_ADDR:=8.8.8.8}"
   : "${keep_alive:=30}"
   : "${nofile:=32768}"
-  : "${client_cache_size:=0}"
+  : "${client_cache_size:=64}"
   : "${worker_count:=1}"
   : "${no_delay:=1}"
   : "${fast_open:=1}"
@@ -202,60 +266,9 @@ generate_config_json() {
 
   json_init
 
-  # ---- locals array ----
+  # ---- locals array (from UCI config local) ----
   json_add_array "locals"
-
-  # socks5 local
-  json_add_object ""
-    if [ "${MAIN_SOCKS_PORT}" = "0" ]; then
-      json_add_boolean "disabled" true
-      json_add_int "local_port" 1080
-    else
-      json_add_boolean "disabled" false
-      json_add_int "local_port" "${MAIN_SOCKS_PORT}"
-    fi
-    json_add_string "local_address" "::"
-  json_close_object
-
-  # http local
-  json_add_object ""
-    if [ "${MAIN_HTTP_PORT}" = "0" ]; then
-      json_add_boolean "disabled" true
-      json_add_int "local_port" 1081
-    else
-      json_add_boolean "disabled" false
-      json_add_int "local_port" "${MAIN_HTTP_PORT}"
-    fi
-    json_add_string "local_address" "::"
-    json_add_string "protocol" "http"
-  json_close_object
-
-  # redir local (tproxy)
-  json_add_object ""
-    json_add_string "local_address" "::"
-    json_add_int "local_port" "${MAIN_REDIR_PORT}"
-    json_add_string "protocol" "redir"
-    json_add_string "tcp_redir" "tproxy"
-    json_add_string "udp_redir" "tproxy"
-    json_add_string "mode" "tcp_and_udp"
-  json_close_object
-
-  # dns local
-  json_add_object ""
-    json_add_string "local_address" "::"
-    json_add_int "local_port" "${MAIN_DNS_PORT}"
-    json_add_string "protocol" "dns"
-    json_add_string "local_dns_address" "${MAIN_DNS_REMOTE_ADDR}"
-    json_add_int "local_dns_port" 53
-    json_add_string "remote_dns_address" "${MAIN_DNS_REMOTE_ADDR}"
-    json_add_int "remote_dns_port" 53
-    json_add_int "client_cache_size" "${client_cache_size}"
-    # Need the TCP fallback: obfs-local (simple-obfs) is a TCP only plugin,
-    # UDP relayed to the server as plain Shadowsocks datagrams often gets
-    # dropped, which leaves every proxied DNS lookup unanswered.
-    json_add_string "mode" "tcp_and_udp"
-  json_close_object
-
+    config_foreach parse_config_local local
   json_close_array
 
   # ---- servers array ----
@@ -409,14 +422,19 @@ start_service() {
     return 0
   fi
 
-  # 2. Generate config.json and make sure the servers array is not empty.
+  # 2. Generate config.json and make sure locals and servers are not empty.
   if ! generate_config_json; then
     _error "failed to generate config.json"
     return 1
   fi
 
+  if [ -z "${LOCAL_LIST_STR}" ]; then
+    _error "no enabled local listener, exit"
+    return 1
+  fi
+
   if [ -z "${SERVER_LIST_STR}" ]; then
-    _info "no enabled server, exit"
+    _error "no enabled server, exit"
     return 1
   fi
 
@@ -425,7 +443,7 @@ start_service() {
   start_shadowsocks_rust
 
   # 4. Transparent proxy rules (route table, nftables, dnsmasq) are optional.
-  #    When disabled, only the local SOCKS5/HTTP proxy is started and the
+  #    When disabled, only the configured local listeners are started and the
   #    system network configuration is left untouched.
   local enable_rules
   config_get enable_rules "settings" enabled

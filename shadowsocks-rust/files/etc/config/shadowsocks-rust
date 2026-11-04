@@ -1,10 +1,5 @@
 config conf main
     option enabled '0'
-    option socks_port '1080'
-    option http_port '1081'
-    option redir_port '60080'
-    option dns_port '5300'
-    option dns_remote_addr '1.1.1.1'
 
 config settings global
     # 建议设为 CPU 核数。设得远高于核数只会增加线程栈和调度开销:
@@ -20,10 +15,29 @@ config settings global
     # sslocal log level: info, debug or trace
     option log_level 'info'
 
+config local 'redir'
+    option enabled '1'
+    option name 'Redir'
+    option protocol 'redir'
+    option local_address '::'
+    option local_port '60080'
+    option tcp_redir 'tproxy'
+    option udp_redir 'tproxy'
+
+config local 'dns'
+    option enabled '1'
+    option name 'DNS'
+    option protocol 'dns'
+    option local_address '::'
+    option local_port '5300'
+    option dns_remote_addr '1.1.1.1'
+
 config rules 'settings'
     # Apply the transparent proxy rules (route table, nftables, dnsmasq).
-    # When disabled, sslocal only provides the local SOCKS5/HTTP proxy.
+    # When disabled, sslocal only provides the configured local listeners.
     option enabled '0'
+    # Which enabled redir local nftables tproxy sends traffic to.
+    option tproxy_local 'redir'
     # accept: direct, checkdst: match the lists below, forward: always proxy
     option src_default 'accept'
     # accept: direct, forward: proxy
@@ -37,7 +51,7 @@ config rules 'settings'
     # URLs of text files with one IP or CIDR per line, # starts a comment.
     #list proxy_ipset_url 'https://example.com/proxy-ips.txt'
     # Resolver for the proxy domains, an ip:port. Leave unset (or empty) for
-    # the system resolvers, use 127.0.0.1:<dns port> for the local relay.
+    # the system resolvers, or pick an enabled dns local (127.0.0.1:<port>).
     #option proxy_domain_dns '127.0.0.1:5300'
     # Resolver for the bypass domains, an ip:port. Leave unset (or empty)
     # for the system resolvers.

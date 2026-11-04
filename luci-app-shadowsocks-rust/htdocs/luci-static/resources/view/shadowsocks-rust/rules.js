@@ -3,6 +3,37 @@
 'require form';
 'require uci';
 
+function localLabel(s) {
+    var name = s.name || s['.name'];
+    var port = s.local_port || '?';
+    var proto = s.protocol || 'socks';
+
+    return '%s (%s :%s)'.format(name, proto, port);
+}
+
+function enabledLocals(protocol) {
+    return uci.sections('shadowsocks-rust', 'local').filter(function(s) {
+        if (s.enabled != '1')
+            return false;
+
+        if (protocol && s.protocol != protocol)
+            return false;
+
+        return true;
+    });
+}
+
+function addDnsOptions(o) {
+    enabledLocals('dns').forEach(function(s) {
+        var port = s.local_port;
+
+        if (!port)
+            return;
+
+        o.value('127.0.0.1:' + port, localLabel(s));
+    });
+}
+
 return view.extend({
     load: function() {
         return Promise.all([
@@ -27,31 +58,49 @@ return view.extend({
             _('Install the route, nftables and dnsmasq rules. Off starts sslocal only.'));
         o.rmempty = false;
 
+        o = s.taboption('policy', form.ListValue, 'tproxy_local', _('TProxy Local'),
+            _('Enabled redir local that nftables sends proxied traffic to.'));
+        var redirs = enabledLocals('redir');
+        if (redirs.length) {
+            redirs.forEach(function(s) {
+                o.value(s['.name'], localLabel(s));
+            });
+        } else {
+            o.value('', _('No enabled redir local'));
+        }
+        o.rmempty = false;
+        o.validate = function(section_id, value) {
+            var apply = this.section.getUIElement(section_id, 'enabled');
+            var on = apply ? apply.getValue() : null;
+
+            if ((on === '1' || on === true) && !value)
+                return _('Add and enable a redir local under Basic Settings first');
+
+            return true;
+        };
+
         o = s.taboption('policy', form.Flag, 'dns_hijack', _('Hijack LAN DNS'),
             _('Redirect DNS queries from LAN clients here, so they follow the domain rules.'));
         o.default = o.enabled;
         o.rmempty = false;
 
-        var dns_port = uci.get('shadowsocks-rust', 'main', 'dns_port') || '5300';
-        var local_relay = '127.0.0.1:' + dns_port;
-
         o = s.taboption('policy', form.Value, 'proxy_domain_dns', _('Proxy Domain DNS'),
-            _('Resolver used for the proxy domains. Leave empty for the system resolvers, or enter an ip:port.'));
-        o.value(local_relay, _('Local Relay') + ' (' + local_relay + ')');
+            _('Resolver used for the proxy domains. Leave empty for the system resolvers, pick an enabled DNS local, or enter an ip:port.'));
+        addDnsOptions(o);
         o.datatype = 'ipaddrport(1)';
         o.placeholder = _('System DNS');
         o.rmempty = true;
 
         o = s.taboption('policy', form.Value, 'bypass_domain_dns', _('Bypass Domain DNS'),
-            _('Resolver used for the bypass domains. Leave empty for the system resolvers, or enter an ip:port.'));
-        o.value(local_relay, _('Local Relay') + ' (' + local_relay + ')');
+            _('Resolver used for the bypass domains. Leave empty for the system resolvers, pick an enabled DNS local, or enter an ip:port.'));
+        addDnsOptions(o);
         o.datatype = 'ipaddrport(1)';
         o.placeholder = _('System DNS');
         o.rmempty = true;
 
         o = s.taboption('policy', form.Value, 'other_domain_dns', _('Other Domains DNS'),
             _('Resolver for the domains not matched by the lists. When set it replaces the system DNS, leave empty to use the system resolvers.'));
-        o.value(local_relay, _('Local Relay') + ' (' + local_relay + ')');
+        addDnsOptions(o);
         o.datatype = 'ipaddrport(1)';
         o.placeholder = _('System DNS');
         o.rmempty = true;

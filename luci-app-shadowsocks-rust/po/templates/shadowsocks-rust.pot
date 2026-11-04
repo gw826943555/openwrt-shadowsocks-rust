@@ -18,6 +18,9 @@ msgstr ""
 msgid "Basic Settings"
 msgstr ""
 
+msgid "Local Service"
+msgstr ""
+
 msgid "Nodes"
 msgstr ""
 
@@ -28,6 +31,9 @@ msgid "Log"
 msgstr ""
 
 msgid "Transparent proxy and DNS settings"
+msgstr ""
+
+msgid "Local listeners for sslocal (SOCKS, HTTP, redir, DNS)."
 msgstr ""
 
 msgid "Service Settings"
@@ -48,34 +54,52 @@ msgstr ""
 msgid "Allow the service to start. When off, sslocal and the rules are not started."
 msgstr ""
 
-msgid "SOCKS Port"
+msgid "Name"
 msgstr ""
 
-msgid "SOCKS5 proxy port, 0 to disable."
+msgid "Optional label shown in the Rules dropdowns."
 msgstr ""
 
-msgid "HTTP Port"
+msgid "Protocol"
 msgstr ""
 
-msgid "HTTP proxy port, 0 to disable."
+msgid "SOCKS5"
 msgstr ""
 
-msgid "TProxy Port"
+msgid "HTTP"
 msgstr ""
 
-msgid "Listening port used by the nftables rules."
+msgid "Redir (TProxy)"
 msgstr ""
 
-msgid "DNS Port"
+msgid "DNS"
 msgstr ""
 
-msgid "Local DNS relay port, dnsmasq forwards proxied domains here."
+msgid "Listen Address"
+msgstr ""
+
+msgid "TCP Redir Mode"
+msgstr ""
+
+msgid "UDP Redir Mode"
 msgstr ""
 
 msgid "DNS Remote Server"
 msgstr ""
 
-msgid "Upstream DNS for proxied domains, queried through the tunnel."
+msgid "Upstream DNS for this relay, queried through the tunnel."
+msgstr ""
+
+msgid "TProxy Local"
+msgstr ""
+
+msgid "Enabled redir local that nftables sends proxied traffic to."
+msgstr ""
+
+msgid "No enabled redir local"
+msgstr ""
+
+msgid "Add and enable a redir local under Basic Settings first"
 msgstr ""
 
 msgid "Advanced Settings"
@@ -345,10 +369,7 @@ msgstr ""
 msgid "Proxy Domain DNS"
 msgstr ""
 
-msgid "Resolver used for the proxy domains. Leave empty for the system resolvers, or enter an ip:port."
-msgstr ""
-
-msgid "Local Relay"
+msgid "Resolver used for the proxy domains. Leave empty for the system resolvers, pick an enabled DNS local, or enter an ip:port."
 msgstr ""
 
 msgid "System DNS"
@@ -357,7 +378,7 @@ msgstr ""
 msgid "Bypass Domain DNS"
 msgstr ""
 
-msgid "Resolver used for the bypass domains. Leave empty for the system resolvers, or enter an ip:port."
+msgid "Resolver used for the bypass domains. Leave empty for the system resolvers, pick an enabled DNS local, or enter an ip:port."
 msgstr ""
 
 msgid "Other Domains DNS"
