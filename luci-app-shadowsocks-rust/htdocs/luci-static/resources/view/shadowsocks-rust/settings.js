@@ -52,6 +52,9 @@ return view.extend({
         o = s.option(form.Flag, 'enabled', _('Enabled'));
         o.editable = true;
         o.default = o.enabled;
+        // Without this, LuCI drops enabled='1' on save (value == default + rmempty),
+        // and the init script then skips every local listener.
+        o.rmempty = false;
 
         o = s.option(form.Value, 'name', _('Name'),
             _('Optional label shown in the Rules dropdowns.'));
