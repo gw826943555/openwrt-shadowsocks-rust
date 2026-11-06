@@ -30,6 +30,8 @@ const RULES_FILE = 'shadowsocks-rust.conf';
 const NFT_TABLE = 'shadowsocks-rust-mangle';
 const DOMAIN_RE = /^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$/;
 const URL_RE = /^https?:\/\/[^[:space:]'"]+$/;
+const FETCH_TIMEOUT = 3;
+const FETCH_TRIES = 3;
 
 let ctx = uci.cursor();
 
@@ -72,16 +74,28 @@ function ensure_cache_dir() {
 	fs.mkdir(CACHE_DIR);
 }
 
-/* Download one URL and return its content, null on failure. */
+/* Download one URL and return its content, null on failure. Every attempt
+ * gets a short timeout and is retried a few times, so a WAN link that is
+ * still dialing at boot does not leave the cache empty until the next
+ * refresh cycle. */
 function fetch(url) {
-	let p = fs.popen([ 'uclient-fetch', '-q', '-T', '15', '-O', '-', url ], 'r');
+	for (let i = 0; i < FETCH_TRIES; i++) {
+		let p = fs.popen([ 'uclient-fetch', '-q', '-T', FETCH_TIMEOUT, '-O', '-', url ], 'r');
 
-	if (!p)
-		return null;
+		if (!p)
+			continue;
 
-	let data = p.read('all');
-	p.close();
-	return data;
+		let data = p.read('all');
+		let rc = p.close();
+
+		if (rc == 0)
+			return data;
+
+		info(sprintf('download attempt %d/%d failed for "%s" (exit %d)',
+			i + 1, FETCH_TRIES, url, rc));
+	}
+
+	return null;
 }
 
 /* Trim, strip comments, validate and de-duplicate a domain list. Invalid
