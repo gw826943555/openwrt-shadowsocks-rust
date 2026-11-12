@@ -71,7 +71,7 @@ opkg update
 opkg install nftables kmod-nft-tproxy ucode ucode-mod-fs ucode-mod-uci resolveip
 ```
 
-`resolveip` 用于启动时把节点域名钉成 IP，避免透明代理回环。
+`resolveip` 用于启动时把节点域名钉成 IP，避免透明代理回环。域名解析失败时会短暂重试；如果启动时 WAN 还没拨号完成，`wan` / `wan6` 接口 up 后会自动重载服务再解析一次。
 
 ## 配置使用
 
@@ -99,7 +99,7 @@ LuCI 页面：`服务` → `Shadowsocks-Rust`
 
 1. 添加 Shadowsocks 节点
 2. 填写：
-   - **Server**：IPv4、IPv6 或域名（域名启动时用 `resolveip` 解析，失败则跳过该节点）
+   - **Server**：IPv4、IPv6 或域名（域名启动时用 `resolveip` 解析；DNS 未就绪会重试，仍失败则跳过该节点，WAN 接口 up 后自动重载服务）
    - **端口 / 密码 / 加密方式**：推荐 `aes-256-gcm` 或 `chacha20-ietf-poly1305`
    - **Plugin**：目前仅支持 `obfs-local`（simple-obfs）
 

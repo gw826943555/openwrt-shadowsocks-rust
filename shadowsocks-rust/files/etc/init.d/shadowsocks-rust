@@ -147,18 +147,29 @@ is_ip_address() {
 }
 
 # Print the first address of a hostname, IPv4 before IPv6. Returns 1 when the
-# name cannot be resolved. Uses resolveip so the output is a bare address list.
+# name cannot be resolved. A few short retries cover the window in which the
+# WAN interface is already up but the resolver cannot answer yet. Without a
+# default route there is no point in waiting: the interface trigger reloads
+# the service once the WAN comes up.
 resolve_host() {
   local v4
   local v6
+  local tries=0
 
-  v4=$(resolveip -4 "$1" 2>/dev/null | head -n 1)
-  [ -n "$v4" ] && { printf '%s\n' "$v4"; return 0; }
+  while :; do
+    v4=$(resolveip -4 "$1" 2>/dev/null | head -n 1)
+    [ -n "$v4" ] && { printf '%s\n' "$v4"; return 0; }
 
-  v6=$(resolveip -6 "$1" 2>/dev/null | head -n 1)
-  [ -n "$v6" ] && { printf '%s\n' "$v6"; return 0; }
+    v6=$(resolveip -6 "$1" 2>/dev/null | head -n 1)
+    [ -n "$v6" ] && { printf '%s\n' "$v6"; return 0; }
 
-  return 1
+    tries=$((tries + 1))
+    [ "$tries" -ge 3 ] && return 1
+
+    ip route show default 2>/dev/null | grep -q '^default' || return 1
+
+    sleep 1
+  done
 }
 
 parse_config_node() {
@@ -521,6 +532,13 @@ stop_service() {
 
 service_triggers() {
   procd_add_reload_trigger "shadowsocks-rust"
+
+  # The WAN may still be dialing when this service is started at boot, so the
+  # enabled nodes cannot be resolved yet and start_service gives up. Once the
+  # WAN interface is up, reload the service instead of waiting for a manual
+  # restart, so the nodes are resolved and the proxy comes up by itself.
+  procd_add_interface_trigger "interface.*.up" "wan" /etc/init.d/shadowsocks-rust reload
+  procd_add_interface_trigger "interface.*.up" "wan6" /etc/init.d/shadowsocks-rust reload
 }
 
 reload_service() {
