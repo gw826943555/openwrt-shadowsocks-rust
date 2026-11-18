@@ -267,13 +267,13 @@ msgstr ""
 msgid "Hours between two downloads of the remote lists, 0 only once at start."
 msgstr ""
 
-msgid "Client IP/CIDR always direct."
+msgid "LAN devices that are always direct. Pick from the known LAN devices; custom IP/CIDR entries are accepted too."
 msgstr ""
 
-msgid "Client IP/CIDR always proxied."
+msgid "LAN devices that are always proxied. Pick from the known LAN devices; custom IP/CIDR entries are accepted too."
 msgstr ""
 
-msgid "Client IP/CIDR matched against the destination lists."
+msgid "LAN devices matched against the destination rules. Pick from the known LAN devices; custom IP/CIDR entries are accepted too."
 msgstr ""
 
 msgid "Domains and subdomains whose traffic goes through the tunnel."

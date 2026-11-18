@@ -1,7 +1,20 @@
 'use strict';
 'require view';
 'require form';
+'require rpc';
 'require uci';
+
+var callHostHints = rpc.declare({
+    object: 'luci-rpc',
+    method: 'getHostHints',
+    expect: { '': {} }
+});
+
+var callNetworkDevices = rpc.declare({
+    object: 'luci-rpc',
+    method: 'getNetworkDevices',
+    expect: { '': {} }
+});
 
 function localLabel(s) {
     var name = s.name || s['.name'];
@@ -34,15 +47,74 @@ function addDnsOptions(o) {
     });
 }
 
+// Build one choice per address of every host known to the system. The hints
+// combine DHCP leases, ARP and IPv6 neighbour entries and wireless clients,
+// so the list reflects the devices that are currently known on the LAN.
+// Addresses of the router's own interfaces are skipped.
+function addDeviceOptions(o, hosts, devices) {
+    var local = { };
+    var seen = { };
+    var entries = [ ];
+
+    Object.keys(devices || { }).forEach(function(name) {
+        var mac = devices[name] && devices[name].mac;
+
+        if (mac)
+            local[mac.toLowerCase()] = true;
+    });
+
+    Object.keys(hosts || { }).forEach(function(mac) {
+        if (local[mac.toLowerCase()])
+            return;
+
+        var host = hosts[mac] || { };
+        var name = host.name || mac;
+        var addrs = [ ];
+
+        L.toArray(host.ipaddrs || host.ipv4).forEach(function(ip) {
+            addrs.push(ip);
+        });
+
+        L.toArray(host.ip6addrs || host.ipv6).forEach(function(ip) {
+            // Link-local and multicast addresses are never a useful source
+            // match for proxied traffic.
+            if (!ip || /^(fe80:|ff|::1$)/i.test(ip))
+                return;
+
+            addrs.push(ip);
+        });
+
+        addrs.forEach(function(ip) {
+            if (!ip || seen[ip])
+                return;
+
+            seen[ip] = true;
+            entries.push({ value: ip, label: name + ' (' + ip + ')' });
+        });
+    });
+
+    entries.sort(function(a, b) {
+        return L.naturalCompare(a.label, b.label);
+    });
+
+    entries.forEach(function(e) {
+        o.value(e.value, e.label);
+    });
+}
+
 return view.extend({
     load: function() {
         return Promise.all([
-            uci.load('shadowsocks-rust')
+            uci.load('shadowsocks-rust'),
+            L.resolveDefault(callHostHints(), { }),
+            L.resolveDefault(callNetworkDevices(), { })
         ]);
     },
 
-    render: function() {
+    render: function(data) {
         var m, s, o;
+        var hosts = data[1] || { };
+        var devices = data[2] || { };
 
         m = new form.Map('shadowsocks-rust', _('Shadowsocks-Rust'),
             _('Transparent proxy and DNS settings'));
@@ -135,20 +207,26 @@ return view.extend({
         o.placeholder = '24';
         o.rmempty = false;
 
-        o = s.taboption('sources', form.DynamicList, 'src_bypass', _('Source Bypass'),
-            _('Client IP/CIDR always direct.'));
+        o = s.taboption('sources', form.MultiValue, 'src_bypass', _('Source Bypass'),
+            _('LAN devices that are always direct. Pick from the known LAN devices; custom IP/CIDR entries are accepted too.'));
+        o.create = true;
         o.rmempty = true;
         o.optional = true;
+        addDeviceOptions(o, hosts, devices);
 
-        o = s.taboption('sources', form.DynamicList, 'src_forward', _('Source Forward'),
-            _('Client IP/CIDR always proxied.'));
+        o = s.taboption('sources', form.MultiValue, 'src_forward', _('Source Forward'),
+            _('LAN devices that are always proxied. Pick from the known LAN devices; custom IP/CIDR entries are accepted too.'));
+        o.create = true;
         o.rmempty = true;
         o.optional = true;
+        addDeviceOptions(o, hosts, devices);
 
-        o = s.taboption('sources', form.DynamicList, 'src_checkdst', _('Source Check Destination'),
-            _('Client IP/CIDR matched against the destination lists.'));
+        o = s.taboption('sources', form.MultiValue, 'src_checkdst', _('Source Check Destination'),
+            _('LAN devices matched against the destination rules. Pick from the known LAN devices; custom IP/CIDR entries are accepted too.'));
+        o.create = true;
         o.rmempty = true;
         o.optional = true;
+        addDeviceOptions(o, hosts, devices);
 
         o = s.taboption('destinations', form.DynamicList, 'proxy_domain', _('Proxy Domain'),
             _('Domains and subdomains whose traffic goes through the tunnel.'));

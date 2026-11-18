@@ -5,7 +5,8 @@
       "ubus": {
         "uci": [ "get", "changes" ],
         "service": [ "list" ],
-        "log": [ "read" ]
+        "log": [ "read" ],
+        "luci-rpc": [ "getHostHints", "getNetworkDevices" ]
       },
       "uci": ["shadowsocks-rust"]
     },

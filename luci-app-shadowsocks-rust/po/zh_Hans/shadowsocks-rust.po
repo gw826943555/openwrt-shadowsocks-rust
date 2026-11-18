@@ -267,14 +267,14 @@ msgstr "列表刷新间隔"
 msgid "Hours between two downloads of the remote lists, 0 only once at start."
 msgstr "远程列表的下载间隔（小时），0 表示仅在启动时下载一次。"
 
-msgid "Client IP/CIDR always direct."
-msgstr "始终直连的客户端 IP/CIDR。"
+msgid "LAN devices that are always direct. Pick from the known LAN devices; custom IP/CIDR entries are accepted too."
+msgstr "始终直连的局域网设备。可从已知的局域网设备中选择，也接受自定义 IP/CIDR。"
 
-msgid "Client IP/CIDR always proxied."
-msgstr "始终代理的客户端 IP/CIDR。"
+msgid "LAN devices that are always proxied. Pick from the known LAN devices; custom IP/CIDR entries are accepted too."
+msgstr "始终走代理的局域网设备。可从已知的局域网设备中选择，也接受自定义 IP/CIDR。"
 
-msgid "Client IP/CIDR matched against the destination lists."
-msgstr "按目标列表判断的客户端 IP/CIDR。"
+msgid "LAN devices matched against the destination rules. Pick from the known LAN devices; custom IP/CIDR entries are accepted too."
+msgstr "按目标规则匹配的局域网设备。可从已知的局域网设备中选择，也接受自定义 IP/CIDR。"
 
 msgid "Domains and subdomains whose traffic goes through the tunnel."
 msgstr "流量经隧道转发的域名及其子域名。"

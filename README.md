@@ -273,7 +273,7 @@ opkg install nftables kmod-nft-tproxy ucode ucode-mod-fs ucode-mod-uci resolveip
 
 其它：
 
-- **Source Bypass / Forward / Check Destination**：按客户端源 IP
+- **Source Bypass / Forward / Check Destination**：按客户端源 IP；下拉框直接从已知的局域网设备（DHCP 租约、ARP/IPv6 邻居表）中选择，也支持自定义 IP/CIDR
 - **Proxy / Bypass Domain、IP Set**：按目的域名或 IP；同名冲突时 bypass 优先
 - 远程域名/IP 列表 URL 与刷新间隔也在 Rules 里配置
 
